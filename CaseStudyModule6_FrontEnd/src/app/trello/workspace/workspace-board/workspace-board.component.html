@@ -1,0 +1,109 @@
+<section class="main-content columns is-fullheight" style="margin-top: 40px">
+  <aside class="column is-2 is-narrow-mobile is-fullheight section is-hidden-mobile" style="width: 14%; padding: 5px 40px 8px;">
+    <ul class="menu-list">
+      <li>
+        <a routerLink="/trello/workspaces/{{workspace.id}}" class="is-active" >
+          <span class="icon"><i class="fab fa-trello logo-icon"></i></span> Board
+        </a>
+      </li>
+      <li>
+        <a routerLink="/trello/workspaces/{{workspace.id}}/members" class="">
+          <span class="icon"><i class="fa fa-table"></i></span> Members
+        </a>
+      </li>
+      <li *ngIf="currentUser.id == owner.id" >
+        <a style="color: red" (click)="showModalDelete()">
+          <span style="color: red" class="icon"><i class="fas fa-trash-alt"></i></span> Delete
+        </a>
+        <div class="dropdown is-active" *ngIf="modalDelete">
+          <div class="dropdown-menu" role="menu">
+            <div class="dropdown-content">
+              <div class="dropdown-item" style="text-align: center">
+                <div style="padding: 10px; border-bottom: 1px solid darkgray">
+                  <h2 style="font-size: 16px">Delete workspace?</h2>
+                </div>
+                <div class="buttons" style="margin-top: 10px;justify-content: center">
+                  <button class="button is-danger is-light" (click)="deleteWorkspace(workspace.id)">Yes</button>
+                  <button class="button is-info is-light" (click)="hideModalDelete()">No</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </aside>
+
+  <div class="container column is-10" style="padding: 0px 13px 13px 0px;">
+    <div class="title-board">
+      <h1><i class="far fa-clipboard"></i>Boards</h1>
+    </div>
+    <div class="section-board">
+      <div class="card" (click)="showAddBoardModal()" *ngIf="roleUserInWorkspace">
+        <div class="img-circle-add-board">
+          <a><i class="fas fa-plus-circle"></i></a>
+        </div>
+      </div>
+      <div class="card" *ngFor="let board of workspace.boards" routerLink="/trello/boards/{{board.id}}">
+        <div class="card-header"><p class="card-header-title">{{board.title}}</p></div>
+        <div class="card-content">
+          <div class="content">
+            <span style="font-size: small"><b>Id: </b>{{board.id}}</span> <br>
+            <span style="font-size: small"><b>Owner: </b>{{board.owner.username}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+</section>
+
+<div *ngIf="modalBoard" class="modal is-active">
+  <div class="modal-background" (click)="hideAddBoardModal()"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Creating new board</p>
+      <button class="delete" aria-label="close" (click)="hideAddBoardModal()"></button>
+    </header>
+    <section class="modal-card-body">
+      <div class="field">
+        <label class="label">Title</label>
+        <div class="control">
+          <input class="input" type="text" required [(ngModel)]="board.title" #boardTitle="ngModel">
+        </div>
+        <div *ngIf="boardTitle.invalid"
+             class="alert">
+          <div *ngIf="boardTitle.errors?.required">
+            Title is required.
+          </div>
+        </div>
+      </div>
+      <div class="field columns">
+        <div class="column is-one-third">
+          <label class="label">Owner</label>
+          <div class="control">
+            <div class="button is-info user-button  is-light">{{currentUser.username}}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <footer class="modal-card-foot">
+      <div *ngIf="boardTitle.invalid" class="alert">
+        <button class="button is-dark" disabled>Save changes</button>
+      </div>
+      <div *ngIf="!boardTitle.invalid" class="alert">
+        <button class="button" (click)="addNewBoard()">Save changes</button>
+      </div>
+      <button class="button" (click)="hideAddBoardModal()">Cancel</button>
+    </footer>
+  </div>
+</div>
+
+
+
+
+
+
+
+

@@ -1,0 +1,68 @@
+<div class="container" id="container">
+
+  <div class="form-container sign-up-container">
+    <form [formGroup]="registerForm" (ngSubmit)="register()">
+      <h1>Create Account</h1>
+      <span>or use your email for registration</span>
+<!--      username-->
+      <input type="text" formControlName="username" placeholder="User Name" (click)="existence()"/>
+      <div *ngIf="this.userExistence" class="col alert alert-danger">
+        User name was already exist!
+      </div>
+      <div class="col alert alert-danger" role="alert" *ngIf="username?.invalid && (username?.dirty || username?.touched)">
+        <div *ngIf="username?.errors?.minlength" class="col alert alert-danger">
+          Name must be at least 6 characters long!
+        </div>
+        <div *ngIf="username?.errors?.required" class="col alert alert-danger">
+          Name must be required!
+        </div>
+      </div>
+<!--      password-->
+      <input type="password" formControlName="password" placeholder="Password" />
+      <div class="col alert alert-danger" role="alert" *ngIf="password?.invalid && (password?.dirty || password?.touched)">
+        <div *ngIf="password?.errors?.required" class="col alert alert-danger">
+          Password must be required!
+        </div>
+        <div *ngIf="password?.errors?.minlength" class="col alert alert-danger">
+          Password must be at least 5 characters long!
+        </div>
+        <div *ngIf="password?.errors?.pattern" class="col alert alert-danger">
+          Minimum four characters, at least one uppercase letter, one lowercase letter and one number!
+        </div>
+      </div>
+<!--      email-->
+      <input type="text" formControlName="email" placeholder="Email" (click)="existence()" />
+      <div *ngIf="this.emailExistence" class="col alert alert-danger">
+        Email was already exist!
+      </div>
+      <div class="col alert alert-danger" role="alert" *ngIf="email?.invalid && (email?.dirty || email?.touched)">
+        <div *ngIf="email?.errors?.required" class="col alert alert-danger">
+          Email must be required!
+        </div>
+        <div *ngIf="email?.errors?.pattern" class="col alert alert-danger">
+          Email is invalid. Must have type: "abc@abc.com"
+        </div>
+      </div>
+      <!--      nickName-->
+      <input type="text" formControlName="nickname" placeholder="Nick Name" />
+      <div class="col alert alert-danger" role="alert"
+           *ngIf="nickname?.errors?.required && nickname?.touched">
+        Nick name must be entered!
+      </div>
+      <button>Sign Up</button>
+    </form>
+  </div>
+
+  <div class="overlay-container">
+    <div class="overlay">
+
+      <div class="overlay-panel overlay-right">
+        <h1>Welcome Back!</h1>
+        <p>To keep connected with us please login with your personal info</p>
+        <button class="ghost" id="signIn" (click)="login()">Sign In</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+<app-footer></app-footer>
