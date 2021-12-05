@@ -5,6 +5,7 @@ import {HttpClient} from "@angular/common/http";
 import {Notification} from "../../model/notification";
 import {UserToken} from "../../model/user-token";
 import {AuthenticationService} from "../authentication/authentication.service";
+import {WebsocketService} from "../websocket.service";
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +15,9 @@ export class NotificationService {
   unreadNotice:number = 0;
   currentUser: UserToken = this.authenticationService.getCurrentUserValue();
   constructor(private http: HttpClient,
-              private authenticationService: AuthenticationService) {  }
+              private authenticationService: AuthenticationService,
+              private websocket: WebsocketService) {
+  }
 
   getTime(){
     let today = new Date();
@@ -27,8 +30,11 @@ export class NotificationService {
     return this.http.get<Notification[]>(`${environment.api_url}notifications/${userId}`);
   }
   createNotification(notification: Notification): Observable<Notification> {
+    this.websocket.connect(notification.idBoard);
+    // this.websocket.sendName(notification);
     return this.http.post<Notification>(`${environment.api_url}notifications`,notification)
   }
+
   updateNotification(id: number, notification: Notification):Observable<Notification>{
     return this.http.put<Notification>(`${environment.api_url}notifications/${id}`,notification)
   }

@@ -130,13 +130,15 @@ export class ModalComponent implements OnInit {
     this.members = [];
     this.membersDto = [];
   }
+
   createNotificationBoard(){
     let notification: Notification = {
       title: `Board:${this.board.title}`,
       content: `${this.authenticationService.getCurrentUserValue().username} create board at ${this.notificationService.getTime()}`,
       url: `/trello/boards/${this.board.id}`,
       status: false,
-      receiver: this.members
+      receiver: this.members,
+      idBoard:  this.board.id
     }
 
     this.notificationService.saveNotification(notification)
