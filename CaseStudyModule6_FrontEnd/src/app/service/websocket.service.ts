@@ -1,37 +1,49 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {Stomp} from "@stomp/stompjs";
 import {Notification} from "../model/notification";
+import {NotificationService} from "./notification/notification.service";
+import {environment} from "../../environments/environment";
+import {Observable} from "rxjs";
+import {User} from "../model/user";
+import {HttpClient} from "@angular/common/http";
+
+const API_URL = `${environment.api_url}`;
 
 
 @Injectable({
   providedIn: 'root'
 })
+
 export class WebsocketService {
-  disabled = true;
+  disabled = false;
   private stompClient: any;
 
-  constructor() {
+  constructor(private http: HttpClient) {
+  }
+
+  getAllIdBoardMember(idUser: number | undefined): Observable<number[]> {
+    return this.http.get<number[]>(`${API_URL}workspaces/getAllBoardMember/`+ idUser);
   }
 
   setConnected(connected: boolean) {
-    this.disabled = !connected;
+    this.disabled = connected;
   }
 
-  connect(idBoard: number | undefined) {
-    // đường dẫn đến server
-    const socket = new WebSocket('ws://localhost:8080/gkz-stomp-endpoint/websocket');
-    this.stompClient = Stomp.over(socket);
-    const _this = this;
-    this.stompClient.connect({}, function (frame: any) {
-      _this.setConnected(true);
-      console.log('Connected: ' + frame);
+  connect(idBoard: number | undefined, notificationService: NotificationService) {
+    if (!this.disabled) {
+      const socket = new WebSocket('ws://localhost:8080/gkz-stomp-endpoint/websocket');
+      this.stompClient = Stomp.over(socket);
+      const _this = this;
+      this.stompClient.connect({}, function (frame: any) {
+        _this.setConnected(true);
 
-      // là chờ xèm thằng server gửi về.
-      _this.stompClient.subscribe('/topic/public'+idBoard, function (notification: any) {
-
+        // là chờ xèm thằng server gửi về.
+        _this.stompClient.subscribe('/topic/public/' + idBoard, function (notification: any) {
+          notificationService.unreadNotice++;
+          notificationService.notification.unshift(JSON.parse(notification.body));
+        });
       });
-
-    });
+    }
   }
 
   disconnect() {
@@ -43,6 +55,7 @@ export class WebsocketService {
   }
 
   sendName(notification: Notification) {
+    console.log("đã vào sendName");
     this.stompClient.send(
       '/gkz/notification',
       {},

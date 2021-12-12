@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {Board} from "../../model/board";
 import {UserToken} from "../../model/user-token";
 import {AuthenticationService} from "../../service/authentication/authentication.service";
@@ -8,6 +8,8 @@ import {Workspace} from "../../model/workspace";
 import {ModalService} from "../../service/modal/modal.service";
 import {WorkspaceService} from "../../service/workspace.service";
 import {Router} from "@angular/router";
+import {NotificationService} from "../../service/notification/notification.service";
+import {WebsocketService} from "../../service/websocket.service";
 
 @Component({
   selector: 'app-trello-home',
@@ -19,11 +21,15 @@ export class TrelloHomeComponent implements OnInit {
   yourBoards: Board[] = [];
   sharedBoards: Board[] = [];
   workspaces: Workspace[] = [];
+  isConnect: boolean = false;
   workspace: Workspace = {boards: [], id: 0, members: [], owner: undefined, title: "", type: ""};
+
   constructor(private authenticationService: AuthenticationService,
               private boardService: BoardService,
               private modalService: ModalService,
               private workspaceService: WorkspaceService,
+              private notificationService: NotificationService,
+              private websocket: WebsocketService,
               private router: Router) {
   }
 
@@ -31,7 +37,15 @@ export class TrelloHomeComponent implements OnInit {
     this.currentUser = this.authenticationService.getCurrentUserValue();
     this.getYourBoards();
     this.getSharedBoards();
-    this.getAllWorkspace()
+    this.getAllWorkspace();
+    this.websocket.getAllIdBoardMember(this.currentUser.id).subscribe(listIdBoard => {
+      console.log("đã vào")
+      console.log(listIdBoard)
+      console.log(this.currentUser.id)
+      for (const id of listIdBoard) {
+        this.websocket.connect(id, this.notificationService);
+      }
+    });
   }
 
 
@@ -47,29 +61,31 @@ export class TrelloHomeComponent implements OnInit {
 
   private getAllWorkspace() {
     this.workspaceService.findAllByOwnerId(<number>this.authenticationService.getCurrentUserValue().id).subscribe(workspaces => {
-        this.workspaces = workspaces;
-      })
+      this.workspaces = workspaces;
+    })
   }
 
   showAddBoardModal() {
     this.modalService.show();
   }
+
   showAddWorkspaceModal() {
     // @ts-ignore
     document.getElementById('create-workspace').classList.add('is-active');
   }
+
   hideAddWorkspaceModal() {
     // @ts-ignore
     document.getElementById('create-workspace').classList.remove('is-active');
   }
 
-  createWorkspaces(){
-      this.workspace.owner = this.currentUser
-      this.hideAddWorkspaceModal()
+  createWorkspaces() {
+    this.workspace.owner = this.currentUser
+    this.hideAddWorkspaceModal()
     this.workspaceService.create(this.workspace).subscribe((workspaces) => {
-        this.getAllWorkspace()
-        this.router.navigateByUrl(`/trello/workspaces/${workspaces.id}`)
-      })
+      this.getAllWorkspace()
+      this.router.navigateByUrl(`/trello/workspaces/${workspaces.id}`)
+    })
   }
 
   scrollTo(el: HTMLElement) {

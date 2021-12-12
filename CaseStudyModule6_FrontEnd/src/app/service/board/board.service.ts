@@ -34,6 +34,10 @@ export class BoardService {
     return this.httpClient.get<Board[]>(`${API_URL}users/${id}/shared-boards`);
   }
 
+  getIdWorkspace(id: number | undefined): Observable<any> {
+    return this.httpClient.get<any>(`${API_URL}boards/getIdWorkspace/${id}`);
+  }
+
   addNewBoard(board: Board): Observable<Board> {
     return  this.httpClient.post<Board>(`${API_URL}boards`, board);
   }

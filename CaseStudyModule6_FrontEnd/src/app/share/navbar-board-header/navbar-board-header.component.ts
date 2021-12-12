@@ -222,9 +222,23 @@ export class NavbarBoardHeaderComponent implements OnInit {
   removeThisBoard() {
     if (this.board.id != null) {
       this.boardService.deleteById(this.board.id).subscribe(() => this.router.navigateByUrl('/trello'));
+
+      this.boardService.getIdWorkspace(this.board.id).subscribe(number => {
+        let notification: Notification = {
+          title: this.board.title,
+          content: this.currentUser.username + " delete board " + this.board.title + this.notificationService.getTime(),
+          url: "/trello",
+          status: false,
+          idBoard: number
+        }
+
+        this.notificationService.saveNotification(notification);
+      })
+
     }
-    this.createNoticeInBoard("delete board")
+    this.createNoticeInBoard("delete board");
   }
+
   createNoticeInBoard(activityText: string) {
     let activity: ActivityLog = {
       title: "Board: " + this.board.title,

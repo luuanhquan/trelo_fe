@@ -35,6 +35,7 @@ export class WorkspaceMemberComponent implements OnInit {
   notifications: Notification[] = [];
   notification: Notification = {};
   selectPage = "member";
+  idBoard: number = -1;
 
   constructor(private workspaceService: WorkspaceService,
               private userService: UserService,
@@ -50,9 +51,9 @@ export class WorkspaceMemberComponent implements OnInit {
 
   ngOnInit(): void {
     this.activatedRoute.paramMap.subscribe(paramMap => {
-      const id = paramMap.get('id')
-      if (id != null) {
-        this.findById(id)
+      this.idBoard = Number.parseInt(<string>paramMap.get('id'));
+      if (this.idBoard != null) {
+        this.findById(this.idBoard)
       }
     });
     window.scrollTo(0, 0)
@@ -98,7 +99,6 @@ export class WorkspaceMemberComponent implements OnInit {
 
   public addMemberWorkspace() {
     if (this.addUserList.length > 0) {
-      let memberWorkspace: MemberWorkspace
       for (let user of this.addUserList) {
         this.memberWorkspace = {
           user: user,
@@ -111,15 +111,22 @@ export class WorkspaceMemberComponent implements OnInit {
         })
       }
       this.toastService.showMessageSuccess("Invite Success!", "is-success");
-      this.createNotificationAddToWorkspace()
       this.addMemberWorkspaceToBoard()
       this.addUserList = []
     }
+    let notification: Notification = {
+      title: this.workspace.title,
+      content: this.currentUser.username + " add Member Workspace " + this.notificationService.getTime(),
+      url: "/trello/workspaces/" + this.workspace.id,
+      status: false,
+      idBoard: this.idBoard
+    }
+
+    this.notificationService.saveNotification(notification);
   }
 
   addMemberWorkspaceToBoard() {
     for (let board of this.workspace.boards) {
-
       for (let member of this.addUserList) {
         let newMember: Member = {
           board: board,
@@ -135,22 +142,6 @@ export class WorkspaceMemberComponent implements OnInit {
     }
   }
 
-  createNotificationAddToWorkspace() {
-    let receivers: User[] = [];
-    for (let member of this.addUserList) {
-      receivers.push(member)
-    }
-    let notification: Notification = {
-      title: this.workspace.title,
-      content: this.currentUser.username + " Added you to the workspace at " + this.notificationService.getTime(),
-      status: false,
-      url: "/trello/workspaces/" + this.workspace.id,
-      receiver: receivers
-    }
-
-    this.notificationService.saveNotification(notification)
-    this.notifications = []
-  }
 
   public selectUser(username: any, user: User) {
     username.value = ""
@@ -163,7 +154,7 @@ export class WorkspaceMemberComponent implements OnInit {
   }
 
   public removeMembers(i: number) {
-    let removeMemberBoard: MemberWorkspace[] = this.workspace.members.splice(i, 1)
+    let removeMemberBoard: MemberWorkspace[] = this.workspace.members.splice(i, 1);
     this.workspaceService.update(this.workspace.id, this.workspace).subscribe(() => {
       let receivers: User[] = [];
       for (let member of removeMemberBoard) {
@@ -177,13 +168,13 @@ export class WorkspaceMemberComponent implements OnInit {
       }
       let notification: Notification = {
         title: this.workspace.title,
-        content: this.currentUser.username + " delte you from group  to the workspace at " + this.notificationService.getTime(),
-        url: "/trello",
+        content: this.currentUser.username + " delete "  + removeMemberBoard[0]?.user?.username + " from group  to the workspace at " + this.notificationService.getTime(),
+        url: "/trello/workspaces/" + this.workspace.id,
         status: false,
-        receiver: receivers
+        idBoard: this.idBoard
       }
 
-      this.notificationService.createNotification(notification).subscribe()
+      this.notificationService.saveNotification(notification);
       receivers = []
     })
     for (let board of this.workspace.boards) {
@@ -238,10 +229,12 @@ export class WorkspaceMemberComponent implements OnInit {
     if (role == "Admin") {
       let notification: Notification = {
         title: this.workspace.title,
-        content: this.currentUser.username + " has changed your permissions from Member => Admin " + this.notificationService.getTime(),
+        content: this.currentUser.username + " has changed "+ member.user?.username +" permissions from Member => Admin " + this.notificationService.getTime(),
         url: "/trello/workspace/" + this.workspace.id + "/member",
         status: false,
-        receiver: receivers
+        receiver: receivers,
+        idBoard: this.idBoard
+
       }
 
       this.notificationService.saveNotification(notification)
@@ -251,7 +244,7 @@ export class WorkspaceMemberComponent implements OnInit {
         content: this.currentUser.username + " has changed your permissions from Admin => Member " + this.notificationService.getTime(),
         url: "/trello/workspace/" + this.workspace.id + "/member",
         status: false,
-        receiver: receivers
+        receiver: receivers,
       }
 
       this.notificationService.saveNotification(notification)
@@ -281,7 +274,9 @@ export class WorkspaceMemberComponent implements OnInit {
       content: `${this.currentUser.username} ${notificationText} at ${this.notificationService.getTime()}`,
       url: "/trello",
       status: false,
-      receiver: receivers
+      receiver: receivers,
+      idBoard: this.idBoard
+
     }
 
     this.notificationService.saveNotification(notification)

@@ -14,6 +14,7 @@ import {AuthenticationService} from "../../../service/authentication/authenticat
 import {Notification} from "../../../model/notification";
 import {NotificationService} from "../../../service/notification/notification.service";
 import {ToastService} from "../../../service/toast/toast.service";
+import {WebsocketService} from "../../../service/websocket.service";
 
 @Component({
   selector: 'app-workspace-board',
@@ -30,15 +31,16 @@ export class WorkspaceBoardComponent implements OnInit {
     },
     columns: [],
   };
-  owner: User={};
+  owner: User = {};
   userSearch: string = ``;
   userResult: User[] = [];
   members: User[] = [];
   modalBoard = false;
-  modalDelete =false;
+  modalDelete = false;
   currentUser: UserToken = this.authenticationService.getCurrentUserValue();
   membersDto: Member[] = [];
   roleUserInWorkspace: Boolean = false;
+  idWorkspace: number = -1;
 
   constructor(private workspaceService: WorkspaceService,
               private userService: UserService,
@@ -49,6 +51,7 @@ export class WorkspaceBoardComponent implements OnInit {
               private memberService: MemberService,
               private authenticationService: AuthenticationService,
               private notificationService: NotificationService,
+              private websocket: WebsocketService,
               private toastService: ToastService) {
 
   }
@@ -56,9 +59,9 @@ export class WorkspaceBoardComponent implements OnInit {
   ngOnInit(): void {
 
     this.activatedRoute.paramMap.subscribe(paramMap => {
-      const id = paramMap.get('id')
-      if (id != null) {
-        this.findById(id)
+      this.idWorkspace = Number.parseInt(<string>paramMap.get('id'));
+      if (this.idWorkspace != null) {
+        this.findById(this.idWorkspace)
       }
     });
     window.scrollTo(0, 0)
@@ -81,18 +84,18 @@ export class WorkspaceBoardComponent implements OnInit {
         this.updateWorkspace(board)
         this.board = board;
         // @ts-ignore
-      this.createNotificationAddBoard(`add board ${board.title} in workspace ${this.workspace.title}`, board.id);
-      for (let member of this.workspace.members) {
-        let memberDto: Member = {
-          board: this.board,
-          canEdit: false,
-          user: {
-            id: member.user?.id
+        this.createNotificationAddBoard(`add board ${board.title} in workspace ${this.workspace.title}`, board.id);
+        for (let member of this.workspace.members) {
+          let memberDto: Member = {
+            board: this.board,
+            canEdit: false,
+            user: {
+              id: member.user?.id
+            }
           }
+          this.membersDto.push(memberDto)
         }
-        this.membersDto.push(memberDto)
-      }
-      this.addNewMembers();
+        this.addNewMembers();
       }
     )
     this.hideAddBoardModal()
@@ -128,6 +131,7 @@ export class WorkspaceBoardComponent implements OnInit {
   hideAddBoardModal() {
     this.modalBoard = false
   }
+
   showModalDelete() {
     this.modalDelete = true
   }
@@ -138,7 +142,8 @@ export class WorkspaceBoardComponent implements OnInit {
 
   public updateWorkspace(board: Board) {
     this.workspace.boards.push(board)
-    this.workspaceService.update(this.workspace.id, this.workspace).subscribe(() => {})
+    this.workspaceService.update(this.workspace.id, this.workspace).subscribe(() => {
+    })
 
   }
 
@@ -173,11 +178,14 @@ export class WorkspaceBoardComponent implements OnInit {
       content: `${this.currentUser.username} ${notificationText} ${this.notificationService.getTime()}`,
       url: "/trello",
       status: false,
-      receiver: receivers
+      receiver: receivers,
+      idBoard: this.idWorkspace
+
     }
 
     this.notificationService.saveNotification(notification)
   }
+
   createNotificationAddBoard(notificationText: string, boardId: number) {
     let receivers: User[] = [];
     for (let member of this.workspace.members) {
@@ -190,7 +198,8 @@ export class WorkspaceBoardComponent implements OnInit {
       content: `${this.currentUser.username} ${notificationText} at ${this.notificationService.getTime()}`,
       url: `/trello/boards/${boardId}`,
       status: false,
-      receiver: receivers
+      receiver: receivers,
+      idBoard: this.idWorkspace
     }
 
     this.notificationService.saveNotification(notification)
